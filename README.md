@@ -58,7 +58,7 @@ make
 ./client --type [unix | inet] --mode [blocking-sync | nonblocking-sync | blocking-async | nonblocking-async] --address [ADDRESS] --port [PORT] --workload [NUMBER_OF_PACKETS]
 ```
 
-- ```--type [unix|inet]```: selects the socket type (either UNIX or INET).
+- ```--type [unix | inet]```: selects the socket type (either UNIX or INET).
 - ```--mode [blocking-sync | nonblocking-sync | blocking-async | nonblocking-async]```: chooses the socket operation mode.
 - ```--port [PORT]```: specifies the port number for INET sockets.
 - ```--address [ADDRESS]```: IP address of the server (for INET sockets).
