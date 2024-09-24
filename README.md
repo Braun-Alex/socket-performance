@@ -168,11 +168,11 @@ The tool supports various modes. Below are example commands for each configurati
 
 Press Ctrl+C in the server terminal to terminate the server gracefully. 🛑
 
-## 📝 Report: performance analysis
+## 📝 Performance analysis
 
 Below is a comparison of different socket configurations across various workloads. 
 Each mode was tested under similar conditions, and the results are presented in terms of connection time, 
-data transfer rates, and overall throughput. Each packet contains 1024 bytes.
+data transfer rates, and overall throughput. **Each packet contains 1024 bytes**.
 
 ### 1. Workload: 1'000 packets
 
@@ -212,6 +212,85 @@ data transfer rates, and overall throughput. Each packet contains 1024 bytes.
 | INET | Non-blocking-sync  | 0.21 | 19220.285 | 520283.64 | 81.87 | 0.02 |
 | INET | Blocking-async     | 0.201 | 20053.085 | 498676.39 | 78.47 | 0.012 |
 | INET | Non-blocking-async | 0.223 | 20181.067 | 495513.93 | 77.98 | 0.017 |
+
+## 🔍 Key findings
+
+The performance analysis of the **Socket performance testing tool** reveals insightful patterns based on socket types and communication modes across varying workloads. Below are the key observations derived from the test results.
+
+### 📌 UNIX vs INET sockets
+
+- **UNIX sockets** consistently demonstrate **lower connection times** and **faster connection closures** compared to **INET sockets** across all modes and workloads. This advantage is attributed to the absence of network protocol overhead, making UNIX sockets highly efficient for **local inter-process communication**.
+
+- **INET sockets**, while introducing additional overhead due to network protocol processing, exhibit robust performance, especially in **medium to high workloads**. Their higher connection times are a trade-off for their capability to handle networked communications effectively.
+
+### 📌 Communication modes performance
+
+#### 1. **Low workload (1,000 packets)**
+
+- **INET sockets** in **blocking-async mode** achieved the **highest throughput**.
+  
+- **UNIX sockets** excelled in **non-blocking-sync mode**, delivering superior throughput compared to other UNIX configurations.
+
+#### 2. **Medium workload (100,000 packets)**
+
+- **INET sockets** in **non-blocking-async mode** led in throughput.
+  
+- **UNIX sockets** maintained strong performance with both **blocking-sync** and **non-blocking-sync** modes, though slightly behind their INET counterparts in this workload.
+
+#### 3. **High workload (10,000,000 packets)**
+
+- **INET sockets** in **blocking-sync mode** achieved the **highest throughput**, suggesting that synchronous communication can be more effective for large-scale data transfers over networks.
+  
+- **UNIX sockets** showed comparable performance between **non-blocking-sync** and **blocking-sync** modes, both outperforming asynchronous configurations in this high-load scenario.
+
+### 📌 Mode-specific insights
+
+**Non-blocking-async mode** did **not consistently** lead in throughput across all socket types and workloads. While it performed admirably in medium workloads for **INET sockets**, it was outperformed by other modes in both low and high workloads.
+
+### 📌 Throughput and latency
+
+- **UNIX sockets** generally offer **higher throughput** and **lower latency** for local communications due to reduced overhead.
+  
+- **INET sockets**, despite higher connection times, provide **competitive throughput**, especially when leveraging appropriate communication modes tailored to the workload size.
+
+### 📌 Connection overheads
+
+**INET sockets** consistently exhibit **higher connection times** compared to **UNIX sockets** across all modes and workloads. This is expected due to the inherent overhead of network protocol processing involved in INET communications.
+
+### 📊 Summary of optimal configurations
+
+- **UNIX sockets**
+  - **Non-blocking-sync** mode is optimal for **low and medium workloads**, providing the highest throughput.
+  - **Blocking-sync** mode remains competitive, especially in **high workloads**.
+
+- **INET sockets**
+  - **Blocking-async** mode is best suited for **low workloads**.
+  - **Non-blocking-async** mode excels in **medium workloads**.
+  - **Blocking-sync** mode is preferable for **very high workloads**.
+
+### 💡 Theoretical alignment
+
+The observed performance aligns with socket communication theories.
+
+- **UNIX sockets** benefit from lower latency and higher throughput in local environments due to bypassing the network stack.
+  
+- **INET sockets** incur additional overhead from network protocols but offer flexibility for networked applications, with performance highly dependent on the chosen communication mode and workload.
+
+- **Non-blocking and asynchronous modes** enhance scalability and throughput by allowing the handling of multiple connections without waiting for I/O operations to complete, which is particularly beneficial in high-load scenarios.
+
+## ⚠️ Important notes
+
+While **non-blocking** and **asynchronous** communication modes are designed to maximize scalability and performance, particularly in environments with a large number of concurrent connections, their benefits are not always evident in tests with **single or low numbers of connections**. Here are some key points to consider when interpreting the results.
+
+1. **Non-blocking and asynchronous modes are optimized for handling multiple concurrent connections**. In scenarios with many simultaneous clients, these modes shine by reducing idle time waiting for I/O operations. However, in tests with a single connection or limited concurrency, the **overhead of managing asynchronous events** can outweigh the benefits, which may explain why synchronous modes (especially blocking-sync) performed better in high-load scenarios.
+
+2. **Asynchronous communication introduces complexity**, such as managing state and event handling, which incurs computational overhead. For small-scale, one-to-one communication, **blocking modes** can achieve higher throughput due to simpler execution paths and fewer context switches.
+
+3. **Non-blocking and asynchronous modes, such as those using `epoll` or similar mechanisms, are most beneficial in large-scale applications** like servers handling thousands of connections simultaneously. The scalability offered by these modes is crucial when connections need to remain open for long periods, but data transmission is sporadic or unpredictable.
+
+4. **Blocking modes** may be more efficient in scenarios with **continuous, large-scale data transfer** between a fixed number of connections. The overhead involved in managing asynchronous events can cause a drop in performance when the workload consists of heavy, uninterrupted data transfers over few connections.
+
+In summary, the performance of different modes depends heavily on the specific use case. **Non-blocking and asynchronous modes** are optimal for high-concurrency, low-latency environments, while **blocking and synchronous modes** may provide better performance for large, continuous data transfers with a limited number of connections.
 
 ## 📜 License
 
